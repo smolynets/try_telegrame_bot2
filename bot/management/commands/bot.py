@@ -12,79 +12,41 @@ from telegram.utils.request import Request
 
 from bot.models import Message
 from bot.models import Profile
-from bot.views import get_profile_count
+from bot.views import get_profiles
 
 
-def log_errors(f):
-    def inner(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except Exception as e:
-            error_message = f"Произошла ошибка: {e}"
-            print(error_message)
-            raise e
-
-    return inner
+def list(update, context):
+    """Send a message when the command /start is issued."""
+    update.message.reply_text("/list \n /func")
 
 
-@log_errors
-def do_echo(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    text = update.message.text
-
-    # p, _ = Profile.objects.get_or_create(
-    #     external_id=chat_id,
-    #     defaults={
-    #         'name': update.message.from_user.username,
-    #     }
-    # )
-    # m = Message(
-    #     profile=p,
-    #     text=text,
-    # )
-    # m.save()
-    profile_count = get_profile_count()
-
-    reply_text = profile_count
-    update.message.reply_text(text=reply_text)
+def func(update, context):
+    """Send a message when the command /help is issued."""
+    update.message.reply_text("Знайти похідну функції у= 2х﻿²-1")
 
 
-@log_errors
-def do_count(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-
-    # p, _ = Profile.objects.get_or_create(
-    #     external_id=chat_id,
-    #     defaults={
-    #         'name': update.message.from_user.username,
-    #     }
-    # )
-    # count = Message.objects.filter(profile=p).count()
-
-    count = 0
-    update.message.reply_text(text=f"У вас {count} сообщений")
+def echo(update, context):
+    """Echo the user message."""
+    update.message.reply_text(
+        "Команда не знайдена. Для відображення списку доступних команд наберіть /list"
+    )
 
 
 class Command(BaseCommand):
     help = "Телеграм-бот"
 
     def handle(self, *args, **options):
-        # 1 -- правильное подключение
         request = Request(connect_timeout=0.5, read_timeout=1.0)
         bot = Bot(
             request=request,
-            token=settings.TOKEN,
+            token="910669360:AAFv_1cPo-QMfe_Xt_GajxE5V4pex0qaeB8",
             base_url=getattr(settings, "PROXY_URL", None),
         )
-        print(bot.get_me())
-
-        # 2 -- обработчики
         updater = Updater(bot=bot, use_context=True)
-
-        message_handler = MessageHandler(Filters.text, do_echo)
-        updater.dispatcher.add_handler(message_handler)
-        updater.dispatcher.add_handler(CommandHandler("count", do_count))
-
-        # 3 -- запустить бесконечную обработку входящих сообщений
+        dp = updater.dispatcher
+        dp.add_handler(CommandHandler("list", list))
+        dp.add_handler(CommandHandler("func", func))
+        dp.add_handler(MessageHandler(Filters.text, echo))
+        # run endless incoming message processing
         updater.start_polling()
         updater.idle()

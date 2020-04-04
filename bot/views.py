@@ -1,6 +1,6 @@
 from bot.models import Profile
 
 
-def get_profile_count():
-    count = Profile.objects.count()
-    return count
+def get_profiles():
+    profile_names = Profile.objects.all().values_list("name", flat=True)
+    return profile_names
